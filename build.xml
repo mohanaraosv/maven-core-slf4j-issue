@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="coverage-report" basedir="." default="help">
+
+	<taskdef resource="tasks.properties" />
+
+	<path id="app.classpath">
+		<fileset dir="${build.dir}">
+			<include name="**/${war.file}" />
+		</fileset>
+	</path>
+
+	<path id="cobertura.auxpath">
+		<fileset dir="${build.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="help">
+		<echo>
+            The build file is supposed to be used from maven build system in order to perform necessary operations
+            to create coveradge report for web application.
+        </echo>
+	</target>
+
+	<target name="report" description="Coverage report" depends="cleanReport">
+		<echo>
+			Code coverage report generated location ${coveragereport.dir}
+		</echo>
+		<cobertura-report format="html" destdir="${coveragereport.dir}" srcdir="${src.dir}" />
+	</target>
+
+	<target name="instrumentWar" description="Instrument" depends="cleanInstrumented,cleanDataFile">
+		<pathconvert property="cobertura.auxpath.path" refid="cobertura.auxpath"/>
+		<echo>
+			Instrumented war location ${instrumented.dir}
+			Instrumenting the included classes ${include.regex}
+			Instrumenting the excluded classes ${exclude.regex}
+			Aux class path ${cobertura.auxpath.path}
+		</echo>
+		<cobertura-instrument todir="${instrumented.dir}">
+			<includeClasses regex="${include.regex}" />
+			<excludeClasses regex="${exclude.regex}" />
+			<instrumentationClasspath>
+				<path refid="app.classpath" />
+			</instrumentationClasspath>
+			<auxClasspath>
+				<path refid="cobertura.auxpath" />
+			</auxClasspath>
+		</cobertura-instrument>
+	</target>
+
+	<target name="instrument" description="instrument and inject jar" depends="instrumentWar" />
+
+	<target name="cleanReport" description="Clean instrumented folder">
+		<echo>
+			Deleting old report if already exist.
+		</echo>
+		<delete dir="${coveragereport.dir}" />
+	</target>
+
+	<target name="cleanInstrumented" description="Clean instrumented folder">
+		<echo>
+			  Deleting intrumenting directory ${instrumented.dir}
+		</echo>
+		<delete dir="${instrumented.dir}" />
+		<mkdir dir="${instrumented.dir}" />
+	</target>
+
+	<target name="cleanDataFile" description="Clean datafile">
+		<echo>
+			Deleting cobertura.ser, if already existing/generated for earlier instrumentation. 
+		</echo>
+		<delete file="cobertura.ser" />
+	</target>
+</project>
